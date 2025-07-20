@@ -28,9 +28,6 @@ KaptureCast is a full-stack, enterprise-grade simulation of a modern Customer Ex
 
 This project goes beyond a simple CRUD application, integrating a generative AI backend to make intelligent decisions, simulating a live environment with real-time notifications, and providing a clean, professional user interface for managing every aspect of the support lifecycle.
 
-![KaptureCast Dashboard GIF](https://placehold.co/800x400.gif?text=Dashboard+Overview+Animation)
-> *A glimpse of the main dashboard, showcasing live metrics and interactive charts.*
-
 ---
 
 ## 🚀 Core Features
@@ -62,9 +59,6 @@ The standout feature of KaptureCast is its hybrid routing system. It combines a 
     ```
 
 2.  **AI-Powered Assignment**: For tickets not handled by the rules, the system sends the ticket details and a list of available agent skills to a generative AI model. The AI then determines the most suitable agent and provides a justification for its choice.
-
-![Intelligent Routing GIF](https://placehold.co/800x400.gif?text=AI+Ticket+Routing+Animation)
-> *Demonstration of the routing engine assigning a new ticket to the perfect agent.*
 
 ---
 
