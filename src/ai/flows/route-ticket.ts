@@ -19,7 +19,7 @@ const RouteTicketInputSchema = z.object({
 export type RouteTicketInput = z.infer<typeof RouteTicketInputSchema>;
 
 const RouteTicketOutputSchema = z.object({
-  assignedAgent: z.string().describe('The ID of the agent to whom the ticket is assigned, or null if no suitable agent is found.'),
+  assignedAgent: z.string().nullable().describe('The ID of the agent to whom the ticket is assigned, or null if no suitable agent is found.'),
   reason: z.string().describe('The reason for assigning the ticket to the agent.'),
 });
 export type RouteTicketOutput = z.infer<typeof RouteTicketOutputSchema>;
