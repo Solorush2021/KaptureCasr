@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { PlusCircle, Briefcase, Tag, UserPlus, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Briefcase, Tag, UserPlus, MoreVertical, Edit, Trash2, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -233,6 +234,7 @@ function DeleteAgentAlert({ agentId, onAgentDelete, children }: { agentId: strin
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
+  const { toast } = useToast();
 
   const handleAgentAdd = (newAgent: Agent) => {
     setAgents(prev => [newAgent, ...prev]);
@@ -244,6 +246,13 @@ export default function AgentsPage() {
   
   const handleAgentDelete = (agentId: string) => {
     setAgents(prev => prev.filter(agent => agent.id !== agentId));
+  };
+
+  const handleSendAlert = (agentName: string) => {
+    toast({
+      title: 'Alert Sent',
+      description: `An alert has been sent to ${agentName}.`,
+    });
   };
 
   return (
@@ -288,10 +297,14 @@ export default function AgentsPage() {
                 </div>
               </div>
             </CardContent>
-             <CardFooter className="bg-muted/30 px-4 py-2">
+             <CardFooter className="bg-muted/30 px-4 py-2 flex items-center justify-between">
+                <Button variant="outline" size="sm" onClick={() => handleSendAlert(agent.name)}>
+                    <Bell className="mr-2 h-4 w-4" />
+                    Send Alert
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="ml-auto h-8 w-8 p-0">
+                    <Button variant="ghost" className="h-8 w-8 p-0">
                       <MoreVertical className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>
                     </Button>

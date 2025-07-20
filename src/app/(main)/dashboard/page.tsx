@@ -1,11 +1,12 @@
 
 "use client"
 
-import { Clock, Download, Ticket as TicketIcon, ChevronDown, Smile, TrendingUp } from "lucide-react";
+import { Clock, Download, Ticket as TicketIcon, ChevronDown, Smile, TrendingUp, RefreshCcw, BarChart2 } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -103,6 +104,13 @@ export default function DashboardPage() {
     }
   };
 
+  const handleChartAction = (action: string, chartName: string) => {
+    toast({
+        title: `Chart Action: ${action}`,
+        description: `Simulating '${action}' for the ${chartName} chart.`,
+    });
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -172,12 +180,12 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-4 flex flex-col">
           <CardHeader>
             <CardTitle>Tickets by Channel</CardTitle>
             <CardDescription>Distribution of tickets across different channels.</CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent className="pl-2 flex-1">
             <ChartContainer config={ticketsByChannelChartConfig} className="h-[300px] w-full">
               <BarChart data={ticketsByChannelData} layout="vertical" margin={{ left: 10 }}>
                 <CartesianGrid horizontal={false} />
@@ -188,13 +196,23 @@ export default function DashboardPage() {
               </BarChart>
             </ChartContainer>
           </CardContent>
+           <CardFooter className="border-t p-4 justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => handleChartAction('Refresh Data', 'Tickets by Channel')}>
+                    <RefreshCcw className="mr-2 h-4 w-4"/>
+                    Refresh Data
+                </Button>
+                 <Button variant="outline" size="sm" onClick={() => handleChartAction('View Report', 'Tickets by Channel')}>
+                    <BarChart2 className="mr-2 h-4 w-4"/>
+                    View Report
+                </Button>
+            </CardFooter>
         </Card>
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3 flex flex-col">
           <CardHeader>
             <CardTitle>Tickets by Priority</CardTitle>
             <CardDescription>Breakdown of tickets by their priority level.</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center">
+          <CardContent className="flex justify-center flex-1">
             <ChartContainer config={ticketsByPriorityChartConfig} className="h-[300px] w-full">
               <PieChart>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
@@ -203,6 +221,16 @@ export default function DashboardPage() {
               </PieChart>
             </ChartContainer>
           </CardContent>
+          <CardFooter className="border-t p-4 justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => handleChartAction('Refresh Data', 'Tickets by Priority')}>
+                    <RefreshCcw className="mr-2 h-4 w-4"/>
+                    Refresh Data
+                </Button>
+                 <Button variant="outline" size="sm" onClick={() => handleChartAction('View Report', 'Tickets by Priority')}>
+                    <BarChart2 className="mr-2 h-4 w-4"/>
+                    View Report
+                </Button>
+            </CardFooter>
         </Card>
       </div>
     </div>

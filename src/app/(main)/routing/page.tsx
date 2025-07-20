@@ -16,6 +16,18 @@ import { routeTicket } from './actions';
 import type { RouteTicketOutput } from '@/ai/flows/route-ticket';
 import { PageHeader } from '@/components/page-header';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from '@/hooks/use-toast';
 
 const allSkills = Array.from(new Set(mockAgents.flatMap(agent => agent.skillTags)));
 
@@ -38,6 +50,74 @@ const initialRules: Rule[] = [
     { id: 'rule-3', keyword: 'cannot login', action: 'Set Priority to HIGH' },
 ];
 
+function AddRuleDialog({ onRuleAdd }: { onRuleAdd: (rule: Rule) => void }) {
+  const [open, setOpen] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [action, setAction] = useState('');
+  const { toast } = useToast();
+
+  const handleAddRule = () => {
+    if (!keyword || !action) {
+      toast({
+        title: "Validation Error",
+        description: "Keyword and action are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newRule: Rule = {
+      id: `rule-${Date.now()}`,
+      keyword,
+      action,
+    };
+
+    onRuleAdd(newRule);
+    toast({
+      title: "Rule Added",
+      description: "The new routing rule has been saved.",
+    });
+    setOpen(false);
+    setKeyword('');
+    setAction('');
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full">
+            <PlusCircle className="mr-2" /> Add Rule
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add New Rule</DialogTitle>
+          <DialogDescription>
+            Define a keyword and the action to be taken when it's found.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="keyword" className="text-right">
+              Keyword
+            </Label>
+            <Input id="keyword" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="col-span-3" placeholder="e.g., refund" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="action" className="text-right">
+              Action
+            </Label>
+            <Input id="action" value={action} onChange={(e) => setAction(e.target.value)} className="col-span-3" placeholder="e.g., Set Priority to HIGH" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleAddRule}>Add Rule</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function RoutingPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +132,14 @@ export default function RoutingPage() {
       agentSkills: allSkills,
     },
   });
+
+  const handleRuleAdd = (newRule: Rule) => {
+    setRules(prev => [...prev, newRule]);
+  };
+
+  const handleRuleDelete = (ruleId: string) => {
+    setRules(prev => prev.filter(rule => rule.id !== ruleId));
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -170,19 +258,17 @@ export default function RoutingPage() {
                     <CardDescription>Define rules that run before AI analysis.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    {rules.map((rule, index) => (
+                    {rules.map((rule) => (
                         <div key={rule.id} className="flex items-center justify-between rounded-lg border p-3">
                             <div className="text-sm">
                                 <span className="font-semibold uppercase text-muted-foreground">IF</span> keyword is <span className="font-mono text-primary">"{rule.keyword}"</span>, <span className="font-semibold uppercase text-muted-foreground">THEN</span> {rule.action}
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setRules(rules.filter(r => r.id !== rule.id))}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRuleDelete(rule.id)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
                     ))}
-                     <Button variant="outline" className="w-full">
-                        <PlusCircle className="mr-2" /> Add Rule
-                    </Button>
+                    <AddRuleDialog onRuleAdd={handleRuleAdd} />
                 </CardContent>
             </Card>
 

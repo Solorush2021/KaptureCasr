@@ -9,6 +9,9 @@ import type { Agent, Ticket } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { RefreshCcw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors: { [key in Agent['status']]: string } = {
   ONLINE: 'bg-green-500',
@@ -27,9 +30,10 @@ const statusText: { [key in Agent['status']]: string } = {
 export default function LiveViewPage() {
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
   const [ticketsByAgent, setTicketsByAgent] = useState<Record<string, Ticket[]>>({});
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const ticketsGroupedByAgent: Record<string, Ticket[]> = {};
+  const groupTicketsByAgent = () => {
+     const ticketsGroupedByAgent: Record<string, Ticket[]> = {};
     mockTickets
       .filter(t => t.agentId && (t.status === 'ASSIGNED' || t.status === 'OPEN' || t.status === 'PENDING_AGENT_REPLY'))
       .forEach(ticket => {
@@ -41,14 +45,31 @@ export default function LiveViewPage() {
         }
       });
     setTicketsByAgent(ticketsGroupedByAgent);
+  }
+
+  useEffect(() => {
+    groupTicketsByAgent();
   }, []);
+  
+  const handleRefresh = () => {
+    groupTicketsByAgent();
+    toast({
+        title: "Board Refreshed",
+        description: "The live agent status board has been updated.",
+    })
+  }
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Live Agent Status Board"
         description="Monitor agent activity and ticket assignments in real-time."
-      />
+      >
+        <Button onClick={handleRefresh}>
+            <RefreshCcw className="mr-2 h-4 w-4"/>
+            Refresh Board
+        </Button>
+      </PageHeader>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {agents.map((agent) => {
           const assignedTickets = ticketsByAgent[agent.id] || [];

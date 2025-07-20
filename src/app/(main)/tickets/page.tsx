@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import { Search, Mail, MessageSquare, Phone, Send, X, Edit, Trash2, Ticket as TicketIcon } from 'lucide-react';
+import { Search, Mail, MessageSquare, Phone, Send, X, Edit, Trash2, Ticket as TicketIcon, MessageCirclePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,9 +29,63 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog"
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+
+function AddNoteDialog({ ticketId, children }: { ticketId: string, children: React.ReactNode }) {
+    const [open, setOpen] = useState(false);
+    const [note, setNote] = useState('');
+    const { toast } = useToast();
+
+    const handleAddNote = () => {
+        if (!note) {
+            toast({ title: 'Note cannot be empty', variant: 'destructive' });
+            return;
+        }
+        console.log(`Adding note to ticket ${ticketId}: ${note}`);
+        toast({
+            title: 'Internal Note Added',
+            description: 'The note has been successfully added to the ticket.',
+        });
+        setNote('');
+        setOpen(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Internal Note</DialogTitle>
+                    <DialogDescription>
+                        This note will only be visible to other agents.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Textarea
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Type your internal note here..."
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddNote}>Add Note</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 function TicketDetailsPanel({ ticket, agents, onTicketUpdate, onTicketDelete, open, onOpenChange }: { ticket: Ticket | null, agents: Agent[], onTicketUpdate: (t: Ticket) => void, onTicketDelete: (id: string) => void, open: boolean, onOpenChange: (open: boolean) => void }) {
   if (!ticket) return null;
@@ -145,11 +199,16 @@ function TicketDetailsPanel({ ticket, agents, onTicketUpdate, onTicketDelete, op
                 <p>Last Updated: {format(ticket.updatedAt, 'PPP p')}</p>
             </div>
         </div>
-        <SheetFooter>
+        <SheetFooter className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end sm:space-x-2">
+            <AddNoteDialog ticketId={ticket.id}>
+                 <Button variant="outline" className="w-full">
+                    <MessageCirclePlus className="mr-2 h-4 w-4" /> Add Note
+                </Button>
+            </AddNoteDialog>
            <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full sm:w-auto">
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete Ticket
+                <Button variant="destructive" className="w-full">
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -346,7 +405,7 @@ export default function TicketsPage() {
         title="Tickets"
         description="Manage and track all customer support tickets."
       />
-      <Tabs value={activeTab} onValueValueChange={setActiveTab} className="flex-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="all">All Tickets</TabsTrigger>
           <TabsTrigger value="EMAIL"><Mail className="mr-2 h-4 w-4" />Email</TabsTrigger>
