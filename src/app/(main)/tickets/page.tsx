@@ -246,6 +246,51 @@ function TicketCreationForm({ channel, onTicketCreate }: { channel: TicketChanne
   );
 }
 
+function ChannelTicketView({ channel, tickets, onTicketCreate, onRowClick, getAgentName }: { channel: TicketChannel, tickets: Ticket[], onTicketCreate: (ticket: Ticket) => void, onRowClick: (ticket: Ticket) => void, getAgentName: (id?: string) => string }) {
+  const channelTickets = tickets.filter(t => t.channel === channel).slice(0, 10);
+  
+  return (
+    <div className="grid lg:grid-cols-5 gap-6">
+      <div className="lg:col-span-2">
+        <TicketCreationForm channel={channel} onTicketCreate={onTicketCreate} />
+      </div>
+      <div className="lg:col-span-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent {channel} Tickets</CardTitle>
+            <CardDescription>Showing the last 10 tickets from this channel.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">ID</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Agent</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {channelTickets.map((ticket) => (
+                    <TableRow key={ticket.id} onClick={() => onRowClick(ticket)} className="cursor-pointer">
+                      <TableCell className="font-medium">{ticket.id}</TableCell>
+                      <TableCell>{ticket.title}</TableCell>
+                      <TableCell>
+                        <Badge variant={ticket.status === 'RESOLVED' || ticket.status === 'CLOSED' ? 'secondary' : ticket.status === 'ESCALATED' ? 'destructive' : 'default'}>{ticket.status}</Badge>
+                      </TableCell>
+                      <TableCell>{getAgentName(ticket.agentId)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
@@ -256,7 +301,8 @@ export default function TicketsPage() {
 
   const handleTicketCreate = (newTicket: Ticket) => {
     setTickets(prev => [newTicket, ...prev]);
-    setActiveTab('all');
+    // No need to switch tab if user is already on the correct channel tab
+    // setActiveTab('all'); 
   };
   
   const handleTicketUpdate = (updatedTicket: Ticket) => {
@@ -286,6 +332,13 @@ export default function TicketsPage() {
     return agents.find(a => a.id === agentId)?.name ?? 'Unknown Agent';
   };
 
+  const channelTabs: { value: TicketChannel, icon: React.ReactNode, name: string }[] = [
+      { value: 'EMAIL', icon: <Mail className="mr-2 h-4 w-4" />, name: 'Email' },
+      { value: 'WHATSAPP', icon: <MessageSquare className="mr-2 h-4 w-4" />, name: 'Whatsapp' },
+      { value: 'CHAT', icon: <MessageSquare className="mr-2 h-4 w-4" />, name: 'Chat' },
+      { value: 'PHONE', icon: <Phone className="mr-2 h-4 w-4" />, name: 'Phone' },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -296,9 +349,9 @@ export default function TicketsPage() {
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="all">All Tickets</TabsTrigger>
           <TabsTrigger value="EMAIL"><Mail className="mr-2 h-4 w-4" />Email</TabsTrigger>
-          <TabsTrigger value="WHATSAPP" className="hidden sm:flex"><MessageSquare className="mr-2 h-4 w-4" />Whatsapp</TabsTrigger>
-          <TabsTrigger value="CHAT" className="hidden sm:flex"><MessageSquare className="mr-2 h-4 w-4" />Chat</TabsTrigger>
-          <TabsTrigger value="PHONE" className="hidden sm:flex"><Phone className="mr-2 h-4 w-4" />Phone</TabsTrigger>
+          <TabsTrigger value="WHATSAPP"><MessageSquare className="mr-2 h-4 w-4" />Whatsapp</TabsTrigger>
+          <TabsTrigger value="CHAT"><MessageSquare className="mr-2 h-4 w-4" />Chat</TabsTrigger>
+          <TabsTrigger value="PHONE"><Phone className="mr-2 h-4 w-4" />Phone</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="mt-4">
           <Card>
@@ -350,18 +403,19 @@ export default function TicketsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="EMAIL" className="mt-4">
-            <TicketCreationForm channel="EMAIL" onTicketCreate={handleTicketCreate} />
-        </TabsContent>
-        <TabsContent value="WHATSAPP" className="mt-4">
-            <TicketCreationForm channel="WHATSAPP" onTicketCreate={handleTicketCreate} />
-        </TabsContent>
-        <TabsContent value="CHAT" className="mt-4">
-            <TicketCreationForm channel="CHAT" onTicketCreate={handleTicketCreate} />
-        </TabsContent>
-        <TabsContent value="PHONE" className="mt-4">
-            <TicketCreationForm channel="PHONE" onTicketCreate={handleTicketCreate} />
-        </TabsContent>
+
+        {channelTabs.map(tab => (
+           <TabsContent key={tab.value} value={tab.value} className="mt-4">
+              <ChannelTicketView 
+                channel={tab.value}
+                tickets={tickets}
+                onTicketCreate={handleTicketCreate}
+                onRowClick={handleRowClick}
+                getAgentName={getAgentName}
+              />
+           </TabsContent>
+        ))}
+
       </Tabs>
 
        <TicketDetailsPanel
@@ -375,6 +429,3 @@ export default function TicketsPage() {
     </div>
   );
 }
-
-
-    
