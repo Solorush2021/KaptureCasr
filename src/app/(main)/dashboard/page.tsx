@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Download, FolderOpen, ShieldCheck, Ticket as TicketIcon } from "lucide-react";
+import { Clock, Download, FolderOpen, ShieldCheck, Ticket as TicketIcon, ChevronDown } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,6 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   ChartContainer,
   ChartTooltip,
@@ -58,8 +64,8 @@ export default function DashboardPage() {
 
   const handleExport = (type: 'CSV' | 'PDF') => {
     toast({
-      title: `Exporting ${type}`,
-      description: `Your dashboard data is being exported as a ${type} file.`,
+      title: `Exporting Dashboard Data`,
+      description: `Your dashboard data is being exported as a ${type} file. This may take a moment.`,
     });
   };
 
@@ -69,8 +75,23 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Overview of your customer support performance."
       >
-        <Button variant="outline" onClick={() => handleExport('CSV')}><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
-        <Button onClick={() => handleExport('PDF')}><Download className="mr-2 h-4 w-4" /> Export PDF</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <Download className="mr-2 h-4 w-4" />
+              Export Data
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleExport('CSV')}>
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport('PDF')}>
+              Export as PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </PageHeader>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
