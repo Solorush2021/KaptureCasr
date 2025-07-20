@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Search, Mail, MessageSquare, Phone } from 'lucide-react';
+import { Search, Mail, MessageSquare, Phone, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,14 +9,53 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { mockTickets, mockAgents } from '@/lib/mock-data';
-import type { Ticket, Agent } from '@/lib/types';
+import type { Ticket, Agent, TicketPriority, TicketChannel } from '@/lib/types';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/page-header';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
-function TicketCreationForm({ channel }: { channel: string }) {
+function TicketCreationForm({ channel, onTicketCreate }: { channel: TicketChannel, onTicketCreate: (ticket: Ticket) => void }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<TicketPriority>('MEDIUM');
+  const { toast } = useToast();
+
+  const handleCreateTicket = () => {
+    if (!title || !description) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill out title and description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newTicket: Ticket = {
+      id: `ticket-${Math.floor(Math.random() * 1000)}`,
+      title,
+      description,
+      priority,
+      channel,
+      status: 'OPEN',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    onTicketCreate(newTicket);
+    toast({
+      title: 'Ticket Created!',
+      description: `A new ${channel.toLowerCase()} ticket has been successfully created.`,
+    });
+    
+    // Reset form
+    setTitle('');
+    setDescription('');
+    setPriority('MEDIUM');
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -25,28 +64,28 @@ function TicketCreationForm({ channel }: { channel: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
-          <Input id="title" placeholder={`Title for ${channel} ticket`} />
+          <Label htmlFor={`title-${channel}`}>Title</Label>
+          <Input id={`title-${channel}`} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Title for ${channel} ticket`} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea id="description" placeholder={`Description for ${channel} ticket`} />
+          <Label htmlFor={`description-${channel}`}>Description</Label>
+          <Textarea id={`description-${channel}`} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={`Description for ${channel} ticket`} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="priority">Priority</Label>
-          <Select>
-            <SelectTrigger id="priority">
+          <Label htmlFor={`priority-${channel}`}>Priority</Label>
+          <Select value={priority} onValueChange={(value: TicketPriority) => setPriority(value)}>
+            <SelectTrigger id={`priority-${channel}`}>
               <SelectValue placeholder="Select priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
+              <SelectItem value="LOW">Low</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="HIGH">High</SelectItem>
+              <SelectItem value="URGENT">Urgent</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <Button>Create Ticket</Button>
+        <Button onClick={handleCreateTicket}><Send className="mr-2" /> Create Ticket</Button>
       </CardContent>
     </Card>
   );
@@ -56,6 +95,13 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+
+  const handleTicketCreate = (newTicket: Ticket) => {
+    setTickets(prev => [newTicket, ...prev]);
+    // Switch to all tickets tab to see the newly created ticket
+    setActiveTab('all');
+  };
 
   const filteredTickets = tickets.filter(ticket =>
     ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,13 +120,13 @@ export default function TicketsPage() {
         title="Tickets"
         description="Manage and track all customer support tickets."
       />
-      <Tabs defaultValue="all" className="flex-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="all">All Tickets</TabsTrigger>
-          <TabsTrigger value="email"><Mail className="mr-2 h-4 w-4" />Email</TabsTrigger>
-          <TabsTrigger value="whatsapp" className="hidden sm:flex"><MessageSquare className="mr-2 h-4 w-4" />Whatsapp</TabsTrigger>
-          <TabsTrigger value="chat" className="hidden sm:flex"><MessageSquare className="mr-2 h-4 w-4" />Chat</TabsTrigger>
-          <TabsTrigger value="phone" className="hidden sm:flex"><Phone className="mr-2 h-4 w-4" />Phone</TabsTrigger>
+          <TabsTrigger value="EMAIL"><Mail className="mr-2 h-4 w-4" />Email</TabsTrigger>
+          <TabsTrigger value="WHATSAPP" className="hidden sm:flex"><MessageSquare className="mr-2 h-4 w-4" />Whatsapp</TabsTrigger>
+          <TabsTrigger value="CHAT" className="hidden sm:flex"><MessageSquare className="mr-2 h-4 w-4" />Chat</TabsTrigger>
+          <TabsTrigger value="PHONE" className="hidden sm:flex"><Phone className="mr-2 h-4 w-4" />Phone</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="mt-4">
           <Card>
@@ -132,17 +178,17 @@ export default function TicketsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="email" className="mt-4">
-            <TicketCreationForm channel="Email" />
+        <TabsContent value="EMAIL" className="mt-4">
+            <TicketCreationForm channel="EMAIL" onTicketCreate={handleTicketCreate} />
         </TabsContent>
-        <TabsContent value="whatsapp" className="mt-4">
-            <TicketCreationForm channel="WhatsApp" />
+        <TabsContent value="WHATSAPP" className="mt-4">
+            <TicketCreationForm channel="WHATSAPP" onTicketCreate={handleTicketCreate} />
         </TabsContent>
-        <TabsContent value="chat" className="mt-4">
-            <TicketCreationForm channel="Chat" />
+        <TabsContent value="CHAT" className="mt-4">
+            <TicketCreationForm channel="CHAT" onTicketCreate={handleTicketCreate} />
         </TabsContent>
-        <TabsContent value="phone" className="mt-4">
-            <TicketCreationForm channel="Phone" />
+        <TabsContent value="PHONE" className="mt-4">
+            <TicketCreationForm channel="PHONE" onTicketCreate={handleTicketCreate} />
         </TabsContent>
       </Tabs>
     </div>

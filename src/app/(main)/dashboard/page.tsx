@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/chart";
 import { BarChart, PieChart, Bar, Pie, YAxis, XAxis, CartesianGrid } from "recharts";
 import { PageHeader } from "@/components/page-header";
+import { useToast } from "@/hooks/use-toast";
 
 const ticketsByChannelData = [
   { channel: 'Email', tickets: 45, fill: 'var(--color-email)' },
@@ -53,14 +54,23 @@ const ticketsByPriorityChartConfig: ChartConfig = {
 };
 
 export default function DashboardPage() {
+  const { toast } = useToast();
+
+  const handleExport = (type: 'CSV' | 'PDF') => {
+    toast({
+      title: `Exporting ${type}`,
+      description: `Your dashboard data is being exported as a ${type} file.`,
+    });
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Dashboard"
         description="Overview of your customer support performance."
       >
-        <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
-        <Button><Download className="mr-2 h-4 w-4" /> Export PDF</Button>
+        <Button variant="outline" onClick={() => handleExport('CSV')}><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
+        <Button onClick={() => handleExport('PDF')}><Download className="mr-2 h-4 w-4" /> Export PDF</Button>
       </PageHeader>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

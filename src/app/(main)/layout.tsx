@@ -24,6 +24,7 @@ const navItems = [
   { href: "/tickets", icon: Icons.Tickets, label: "Tickets" },
   { href: "/agents", icon: Icons.Agents, label: "Agents" },
   { href: "/routing", icon: Icons.Routing, label: "Intelligent Routing" },
+  { href: "/settings", icon: Icons.Settings, label: "Settings" },
 ];
 
 function AppSidebar() {

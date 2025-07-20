@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { PlusCircle, Briefcase, Tag } from 'lucide-react';
+import { PlusCircle, Briefcase, Tag, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { mockAgents } from '@/lib/mock-data';
 import type { Agent } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors: { [key in Agent['status']]: string } = {
   ONLINE: 'bg-green-500',
@@ -17,8 +29,83 @@ const statusColors: { [key in Agent['status']]: string } = {
   ON_BREAK: 'bg-yellow-500',
 };
 
+function AddAgentDialog({ onAgentAdd }: { onAgentAdd: (agent: Agent) => void }) {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  const handleAddAgent = () => {
+    if (!name || !email) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill out all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newAgent: Agent = {
+      id: `agent-${Math.floor(Math.random() * 1000)}`,
+      name,
+      email,
+      status: 'OFFLINE',
+      skillTags: ['Newbie'],
+      maxConcurrentTickets: 5,
+      avatarUrl: 'https://placehold.co/100x100',
+    };
+    onAgentAdd(newAgent);
+    toast({
+      title: "Agent Added",
+      description: `${name} has been added to the team.`,
+    });
+    setOpen(false);
+    setName('');
+    setEmail('');
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Agent
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add New Agent</DialogTitle>
+          <DialogDescription>
+            Enter the details for the new agent. They will be added with OFFLINE status by default.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" placeholder="e.g. John Doe" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="email" className="text-right">
+              Email
+            </Label>
+            <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="col-span-3" placeholder="e.g. john.doe@kapture.cx" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleAddAgent}><UserPlus className="mr-2" /> Add Agent</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
+
+  const handleAgentAdd = (newAgent: Agent) => {
+    setAgents(prev => [newAgent, ...prev]);
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -26,9 +113,7 @@ export default function AgentsPage() {
         title="Agent Management"
         description="View, add, and manage your support agents."
       >
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Agent
-        </Button>
+        <AddAgentDialog onAgentAdd={handleAgentAdd} />
       </PageHeader>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
