@@ -1,4 +1,4 @@
-import { type LucideProps, BotMessageSquare, BarChart, Ticket, Users, Route, Settings } from 'lucide-react';
+import { type LucideProps, BotMessageSquare, BarChart, Ticket, Users, Route, Settings, MonitorPlay } from 'lucide-react';
 
 export const Icons = {
   Logo: (props: LucideProps) => (
@@ -9,4 +9,5 @@ export const Icons = {
   Agents: Users,
   Routing: Route,
   Settings: Settings,
+  LiveView: MonitorPlay,
 };

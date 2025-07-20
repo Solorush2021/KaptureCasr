@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Clock, Download, FolderOpen, ShieldCheck, Ticket as TicketIcon, ChevronDown } from "lucide-react";
+import { Clock, Download, Ticket as TicketIcon, ChevronDown, Smile, TrendingUp } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -131,42 +131,42 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
+            <CardTitle className="text-sm font-medium">Tickets Solved Today</CardTitle>
             <TicketIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12,402</div>
-            <p className="text-xs text-muted-foreground">+5.2% from last month</p>
+            <div className="text-2xl font-bold">1,254</div>
+            <p className="text-xs text-muted-foreground">+12% from yesterday</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
-            <FolderOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">231</div>
-            <p className="text-xs text-muted-foreground">Currently active and unassigned</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Resolution Time</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg. Response Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4h 32m</div>
-            <p className="text-xs text-muted-foreground">-2.1% from last month</p>
+            <div className="text-2xl font-bold">2m 15s</div>
+            <p className="text-xs text-muted-foreground">-5% from yesterday</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle>
+            <Smile className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">95.8%</div>
+            <p className="text-xs text-muted-foreground">+0.5% from last week</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">SLA Compliance</CardTitle>
-            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">98.2%</div>
-            <p className="text-xs text-muted-foreground">+1.5% from last month</p>
+            <div className="text-2xl font-bold">99.2%</div>
+            <p className="text-xs text-muted-foreground">Trending upwards</p>
           </CardContent>
         </Card>
       </div>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Mail, MessageSquare, Phone, Send, X, Edit, Trash2, Ticket as TicketIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -129,7 +129,7 @@ function TicketDetailsPanel({ ticket, agents, onTicketUpdate, onTicketDelete, op
                 <Card className="bg-muted/50">
                     <CardHeader className="flex flex-row items-center gap-4 p-4">
                         <Avatar>
-                            <AvatarImage src={assignedAgent.avatarUrl} alt={assignedAgent.name} data-ai-hint="person avatar"/>
+                            <AvatarImage src={assignedAgent.avatarUrl} alt={assignedAgent.name} data-ai-hint="person avatar" />
                             <AvatarFallback>{assignedAgent.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -293,7 +293,7 @@ function ChannelTicketView({ channel, tickets, onTicketCreate, onRowClick, getAg
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
-  const [agents, setAgents] = useState<Agent[]>(mockAgents);
+  const [agents] = useState<Agent[]>(mockAgents);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -301,8 +301,6 @@ export default function TicketsPage() {
 
   const handleTicketCreate = (newTicket: Ticket) => {
     setTickets(prev => [newTicket, ...prev]);
-    // No need to switch tab if user is already on the correct channel tab
-    // setActiveTab('all'); 
   };
   
   const handleTicketUpdate = (updatedTicket: Ticket) => {
@@ -321,11 +319,14 @@ export default function TicketsPage() {
     setIsPanelOpen(true);
   };
 
-  const filteredTickets = tickets.filter(ticket =>
-    ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTickets = useMemo(() => {
+    if (!searchTerm) return tickets;
+    return tickets.filter(ticket =>
+      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [tickets, searchTerm]);
 
   const getAgentName = (agentId?: string) => {
     if (!agentId) return 'Unassigned';
@@ -345,7 +346,7 @@ export default function TicketsPage() {
         title="Tickets"
         description="Manage and track all customer support tickets."
       />
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+      <Tabs value={activeTab} onValueValueChange={setActiveTab} className="flex-1">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="all">All Tickets</TabsTrigger>
           <TabsTrigger value="EMAIL"><Mail className="mr-2 h-4 w-4" />Email</TabsTrigger>

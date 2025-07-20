@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -18,13 +19,15 @@ import {
 } from "@/components/ui/sidebar";
 import { Icons } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { mockAgents } from "@/lib/mock-data";
 
 const navItems = [
   { href: "/dashboard", icon: Icons.Dashboard, label: "Dashboard" },
   { href: "/tickets", icon: Icons.Tickets, label: "Tickets" },
   { href: "/agents", icon: Icons.Agents, label: "Agents" },
   { href: "/routing", icon: Icons.Routing, label: "Intelligent Routing" },
-  { href: "/settings", icon: Icons.Settings, label: "Settings" },
+  { href: "/live-view", icon: Icons.LiveView, label: "Live View" },
 ];
 
 function AppSidebar() {
@@ -77,6 +80,41 @@ function AppSidebar() {
   );
 }
 
+const ambientNotifications = [
+    { title: "🎉 New 5-star review!", description: (agent: string) => `Great job, ${agent}! A customer left a 5-star review.` },
+    { title: "📈 Record Breaker!", description: (agent: string) => `${agent} just set a new personal record for fastest ticket resolution!` },
+    { title: "🔔 Reminder", description: (agent: string) => `${agent}, you have tickets nearing their SLA breach time.` },
+    { title: "⚠️ High-Priority Ticket", description: () => `A high-priority ticket has been unassigned for 10 minutes.` },
+];
+
+
+function AmbientNotifier() {
+    const { toast } = useToast();
+    const [agents] = React.useState(mockAgents);
+
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            const randomNotification = ambientNotifications[Math.floor(Math.random() * ambientNotifications.length)];
+            const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+            
+            const description = typeof randomNotification.description === 'function' 
+                ? randomNotification.description(randomAgent.name)
+                : randomNotification.description;
+
+            toast({
+                title: randomNotification.title,
+                description: description,
+                variant: 'default'
+            });
+        }, 15000); // Every 15 seconds
+
+        return () => clearInterval(interval);
+    }, [toast, agents]);
+
+    return null;
+}
+
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
@@ -88,6 +126,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </header>
           <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
         </SidebarInset>
+        <AmbientNotifier />
       </div>
     </SidebarProvider>
   );
