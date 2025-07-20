@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState } from 'react';
-import { Search, Mail, MessageSquare, Phone, Send } from 'lucide-react';
+import { Search, Mail, MessageSquare, Phone, Send, X, Edit, Trash2, Ticket as TicketIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,13 +10,168 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { mockTickets, mockAgents } from '@/lib/mock-data';
-import type { Ticket, Agent, TicketPriority, TicketChannel } from '@/lib/types';
+import type { Ticket, Agent, TicketPriority, TicketChannel, TicketStatus } from '@/lib/types';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/page-header';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+
+function TicketDetailsPanel({ ticket, agents, onTicketUpdate, onTicketDelete, open, onOpenChange }: { ticket: Ticket | null, agents: Agent[], onTicketUpdate: (t: Ticket) => void, onTicketDelete: (id: string) => void, open: boolean, onOpenChange: (open: boolean) => void }) {
+  if (!ticket) return null;
+  const { toast } = useToast();
+
+  const handleUpdate = (field: keyof Ticket, value: any) => {
+    const updatedTicket = { ...ticket, [field]: value, updatedAt: new Date() };
+    onTicketUpdate(updatedTicket);
+    toast({
+      title: 'Ticket Updated',
+      description: `Ticket ${ticket.id} has been updated.`,
+    });
+  };
+
+  const handleDelete = () => {
+    onTicketDelete(ticket.id);
+    toast({
+      title: 'Ticket Deleted',
+      description: `Ticket ${ticket.id} has been deleted.`,
+      variant: 'destructive',
+    });
+    onOpenChange(false);
+  };
+  
+  const getAgentById = (agentId: string) => agents.find(a => a.id === agentId);
+  const assignedAgent = ticket.agentId ? getAgentById(ticket.agentId) : null;
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg w-full flex flex-col">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <TicketIcon className="h-6 w-6 text-primary"/>
+            <span>{ticket.title}</span>
+          </SheetTitle>
+          <SheetDescription>
+            ID: {ticket.id} | Channel: {ticket.channel}
+          </SheetDescription>
+        </SheetHeader>
+        <Separator />
+        <div className="flex-1 overflow-y-auto pr-6 space-y-6">
+            <p className="text-sm text-muted-foreground">{ticket.description}</p>
+            
+            <div className="grid grid-cols-2 gap-4">
+                 <div>
+                    <Label className="text-xs text-muted-foreground">Status</Label>
+                    <Select value={ticket.status} onValueChange={(value: TicketStatus) => handleUpdate('status', value)}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="OPEN">Open</SelectItem>
+                            <SelectItem value="PENDING_AGENT_REPLY">Pending Agent Reply</SelectItem>
+                            <SelectItem value="PENDING_CUSTOMER_REPLY">Pending Customer Reply</SelectItem>
+                            <SelectItem value="ASSIGNED">Assigned</SelectItem>
+                            <SelectItem value="RESOLVED">Resolved</SelectItem>
+                            <SelectItem value="CLOSED">Closed</SelectItem>
+                            <SelectItem value="ESCALATED">Escalated</SelectItem>
+                            <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                        </SelectContent>
+                    </Select>
+                 </div>
+                 <div>
+                    <Label className="text-xs text-muted-foreground">Priority</Label>
+                    <Select value={ticket.priority} onValueChange={(value: TicketPriority) => handleUpdate('priority', value)}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="LOW">Low</SelectItem>
+                            <SelectItem value="MEDIUM">Medium</SelectItem>
+                            <SelectItem value="HIGH">High</SelectItem>
+                            <SelectItem value="URGENT">Urgent</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            <div>
+              <Label className="text-xs text-muted-foreground">Assigned Agent</Label>
+              <Select value={ticket.agentId || 'unassigned'} onValueChange={(value) => handleUpdate('agentId', value === 'unassigned' ? undefined : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Assign an agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {agents.map(agent => (
+                    <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {assignedAgent && (
+                <Card className="bg-muted/50">
+                    <CardHeader className="flex flex-row items-center gap-4 p-4">
+                        <Avatar>
+                            <AvatarImage src={assignedAgent.avatarUrl} alt={assignedAgent.name} data-ai-hint="person avatar"/>
+                            <AvatarFallback>{assignedAgent.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold">{assignedAgent.name}</p>
+                            <p className="text-xs text-muted-foreground">{assignedAgent.email}</p>
+                        </div>
+                    </CardHeader>
+                </Card>
+            )}
+
+            <div className="text-xs text-muted-foreground space-y-2">
+                <p>Created: {format(ticket.createdAt, 'PPP p')}</p>
+                <p>Last Updated: {format(ticket.updatedAt, 'PPP p')}</p>
+            </div>
+        </div>
+        <SheetFooter>
+           <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full sm:w-auto">
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Ticket
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete this ticket.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                    Yes, delete ticket
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
 
 function TicketCreationForm({ channel, onTicketCreate }: { channel: TicketChannel, onTicketCreate: (ticket: Ticket) => void }) {
   const [title, setTitle] = useState('');
@@ -34,7 +190,7 @@ function TicketCreationForm({ channel, onTicketCreate }: { channel: TicketChanne
     }
 
     const newTicket: Ticket = {
-      id: `ticket-${Math.floor(Math.random() * 1000)}`,
+      id: `TKT-${Math.floor(Math.random() * 900) + 100}`,
       title,
       description,
       priority,
@@ -50,7 +206,6 @@ function TicketCreationForm({ channel, onTicketCreate }: { channel: TicketChanne
       description: `A new ${channel.toLowerCase()} ticket has been successfully created.`,
     });
     
-    // Reset form
     setTitle('');
     setDescription('');
     setPriority('MEDIUM');
@@ -96,11 +251,28 @@ export default function TicketsPage() {
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const handleTicketCreate = (newTicket: Ticket) => {
     setTickets(prev => [newTicket, ...prev]);
-    // Switch to all tickets tab to see the newly created ticket
     setActiveTab('all');
+  };
+  
+  const handleTicketUpdate = (updatedTicket: Ticket) => {
+    setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+    if (selectedTicket?.id === updatedTicket.id) {
+        setSelectedTicket(updatedTicket);
+    }
+  };
+  
+  const handleTicketDelete = (ticketId: string) => {
+    setTickets(prev => prev.filter(t => t.id !== ticketId));
+  };
+  
+  const handleRowClick = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setIsPanelOpen(true);
   };
 
   const filteredTickets = tickets.filter(ticket =>
@@ -159,7 +331,7 @@ export default function TicketsPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredTickets.map((ticket) => (
-                    <TableRow key={ticket.id}>
+                    <TableRow key={ticket.id} onClick={() => handleRowClick(ticket)} className="cursor-pointer">
                       <TableCell className="font-medium">{ticket.id}</TableCell>
                       <TableCell>{ticket.title}</TableCell>
                       <TableCell>
@@ -191,6 +363,18 @@ export default function TicketsPage() {
             <TicketCreationForm channel="PHONE" onTicketCreate={handleTicketCreate} />
         </TabsContent>
       </Tabs>
+
+       <TicketDetailsPanel
+        ticket={selectedTicket}
+        agents={agents}
+        onTicketUpdate={handleTicketUpdate}
+        onTicketDelete={handleTicketDelete}
+        open={isPanelOpen}
+        onOpenChange={setIsPanelOpen}
+      />
     </div>
   );
 }
+
+
+    
