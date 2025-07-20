@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Sparkles, Send } from 'lucide-react';
+import { Loader2, Sparkles, Send, PlusCircle, Trash2, ShieldQuestion } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +15,7 @@ import { mockAgents } from '@/lib/mock-data';
 import { routeTicket } from './actions';
 import type { RouteTicketOutput } from '@/ai/flows/route-ticket';
 import { PageHeader } from '@/components/page-header';
+import { Separator } from '@/components/ui/separator';
 
 const allSkills = Array.from(new Set(mockAgents.flatMap(agent => agent.skillTags)));
 
@@ -24,10 +26,24 @@ const formSchema = z.object({
   }),
 });
 
+type Rule = {
+  id: string;
+  keyword: string;
+  action: string;
+};
+
+const initialRules: Rule[] = [
+    { id: 'rule-1', keyword: 'payment failed', action: 'Set Priority to URGENT' },
+    { id: 'rule-2', keyword: 'refund', action: 'Assign to Billing skill' },
+    { id: 'rule-3', keyword: 'cannot login', action: 'Set Priority to HIGH' },
+];
+
+
 export default function RoutingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<RouteTicketOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rules, setRules] = useState<Rule[]>(initialRules);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,6 +58,16 @@ export default function RoutingPage() {
     setResult(null);
     setError(null);
     try {
+      // Simple rule application simulation before sending to AI
+      let processedTicketDetails = values.ticketDetails;
+      rules.forEach(rule => {
+        if (processedTicketDetails.toLowerCase().includes(rule.keyword.toLowerCase())) {
+          console.log(`Applying rule: ${rule.action}`);
+          // In a real app, this would modify the ticket object.
+          // For now, we'll just log it. The AI will see the original text.
+        }
+      });
+
       const response = await routeTicket(values);
       setResult(response);
     } catch (e) {
@@ -55,127 +81,158 @@ export default function RoutingPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Intelligent Ticket Routing"
-        description="Use GenAI to automatically assign tickets to the best agent."
+        description="Use a combination of a rules engine and GenAI to automatically assign tickets."
       />
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="grid gap-8 lg:grid-cols-5">
+        <div className="lg:col-span-3 space-y-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Route a Ticket</CardTitle>
+                    <CardDescription>Enter ticket details and select available agent skills to find the best match.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="ticketDetails"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ticket Details</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="e.g., High priority ticket about a billing issue. Customer is upset."
+                              className="min-h-[120px] resize-y"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="agentSkills"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Available Agent Skills</FormLabel>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {allSkills.map((skill) => (
+                              <FormField
+                                key={skill}
+                                control={form.control}
+                                name="agentSkills"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem key={skill} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3">
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(skill)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value, skill])
+                                              : field.onChange(field.value?.filter((value) => value !== skill));
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal text-sm">{skill}</FormLabel>
+                                    </FormItem>
+                                  );
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                  <CardFooter>
+                    <Button type="submit" disabled={isLoading} size="lg">
+                      {isLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="mr-2 h-4 w-4" />
+                      )}
+                      Route Ticket
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </form>
+            </Form>
+        </div>
+        
+        <div className="lg:col-span-2 space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Route a Ticket</CardTitle>
-                <CardDescription>Enter ticket details and select available agent skills to find the best match.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="ticketDetails"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ticket Details</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="e.g., High priority ticket about a billing issue. Customer is upset."
-                          className="min-h-[120px] resize-y"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="agentSkills"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>Available Agent Skills</FormLabel>
-                      <div className="grid grid-cols-2 gap-2">
-                        {allSkills.map((skill) => (
-                          <FormField
-                            key={skill}
-                            control={form.control}
-                            name="agentSkills"
-                            render={({ field }) => {
-                              return (
-                                <FormItem key={skill} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(skill)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, skill])
-                                          : field.onChange(field.value?.filter((value) => value !== skill));
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal text-sm">{skill}</FormLabel>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" disabled={isLoading} size="lg">
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="mr-2 h-4 w-4" />
-                  )}
-                  Route Ticket
-                </Button>
-              </CardFooter>
-            </Card>
-          </form>
-        </Form>
-
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Routing Result</h3>
-            {isLoading && (
-              <Card className="flex h-full min-h-[300px] items-center justify-center p-8">
-                <div className="text-center text-muted-foreground">
-                  <Loader2 className="mx-auto h-8 w-8 animate-spin" />
-                  <p className="mt-4">Finding the best agent...</p>
-                </div>
-              </Card>
-            )}
-            {error && (
-              <Card className="border-destructive bg-destructive/10 p-4 min-h-[300px]">
-                <CardTitle className="text-destructive">Error</CardTitle>
-                <CardDescription className="text-destructive">{error}</CardDescription>
-              </Card>
-            )}
-            {result && (
-              <Card className="bg-primary/5 min-h-[300px]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="text-accent" />
-                    Assignment Recommendation
-                  </CardTitle>
+                    <CardTitle>Routing Rules Engine</CardTitle>
+                    <CardDescription>Define rules that run before AI analysis.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-lg">Assigned Agent</h4>
-                    <p className="text-muted-foreground">{mockAgents.find(a => a.id === result.assignedAgent)?.name || result.assignedAgent || 'No suitable agent found'}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-lg">Reason</h4>
-                    <p className="text-muted-foreground">{result.reason}</p>
-                  </div>
+                <CardContent className="space-y-3">
+                    {rules.map((rule, index) => (
+                        <div key={rule.id} className="flex items-center justify-between rounded-lg border p-3">
+                            <div className="text-sm">
+                                <span className="font-semibold uppercase text-muted-foreground">IF</span> keyword is <span className="font-mono text-primary">"{rule.keyword}"</span>, <span className="font-semibold uppercase text-muted-foreground">THEN</span> {rule.action}
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setRules(rules.filter(r => r.id !== rule.id))}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                     <Button variant="outline" className="w-full">
+                        <PlusCircle className="mr-2" /> Add Rule
+                    </Button>
                 </CardContent>
-              </Card>
-            )}
-            {!isLoading && !result && !error && (
-              <Card className="flex h-full min-h-[300px] items-center justify-center p-8 text-center border-dashed">
-                  <p className="text-muted-foreground">The routing result will be displayed here.</p>
-              </Card>
-            )}
+            </Card>
+
+            <Separator />
+            
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold">Routing Result</h3>
+                {isLoading && (
+                  <Card className="flex h-full min-h-[220px] items-center justify-center p-8">
+                    <div className="text-center text-muted-foreground">
+                      <Loader2 className="mx-auto h-8 w-8 animate-spin" />
+                      <p className="mt-4">Applying rules and finding the best agent...</p>
+                    </div>
+                  </Card>
+                )}
+                {error && (
+                  <Card className="border-destructive bg-destructive/10 p-4 min-h-[220px]">
+                    <CardTitle className="text-destructive">Error</CardTitle>
+                    <CardDescription className="text-destructive">{error}</CardDescription>
+                  </Card>
+                )}
+                {result && (
+                  <Card className="bg-primary/5 min-h-[220px]">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="text-accent" />
+                        Assignment Recommendation
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-lg">Assigned Agent</h4>
+                        <p className="text-muted-foreground">{mockAgents.find(a => a.id === result.assignedAgent)?.name || result.assignedAgent || 'No suitable agent found'}</p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">Reason</h4>
+                        <p className="text-muted-foreground">{result.reason}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                {!isLoading && !result && !error && (
+                  <Card className="flex h-full min-h-[220px] items-center justify-center p-8 text-center border-dashed">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <ShieldQuestion className="h-8 w-8" />
+                        <p>The routing result will be displayed here.</p>
+                      </div>
+                  </Card>
+                )}
+            </div>
         </div>
       </div>
     </div>
