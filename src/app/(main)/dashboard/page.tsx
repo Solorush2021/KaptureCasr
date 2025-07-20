@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Clock, Download, FolderOpen, ShieldCheck, Ticket as TicketIcon, ChevronDown } from "lucide-react";
@@ -26,6 +27,7 @@ import {
 import { BarChart, PieChart, Bar, Pie, YAxis, XAxis, CartesianGrid } from "recharts";
 import { PageHeader } from "@/components/page-header";
 import { useToast } from "@/hooks/use-toast";
+import { mockTickets } from "@/lib/mock-data";
 
 const ticketsByChannelData = [
   { channel: 'Email', tickets: 45, fill: 'var(--color-email)' },
@@ -59,14 +61,46 @@ const ticketsByPriorityChartConfig: ChartConfig = {
   urgent: { label: 'Urgent', color: 'hsl(var(--chart-4))' },
 };
 
+function downloadCSV(data: any[], filename: string) {
+  if (!data || data.length === 0) {
+    return;
+  }
+
+  const replacer = (key: string, value: any) => value === null ? '' : value;
+  const header = Object.keys(data[0]);
+  let csv = data.map(row => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','));
+  csv.unshift(header.join(','));
+  const csvArray = csv.join('\r\n');
+
+  const blob = new Blob([csvArray], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
 export default function DashboardPage() {
   const { toast } = useToast();
 
   const handleExport = (type: 'CSV' | 'PDF') => {
-    toast({
-      title: `Exporting Dashboard Data`,
-      description: `Your dashboard data is being exported as a ${type} file. This may take a moment.`,
-    });
+    if (type === 'CSV') {
+      toast({
+        title: `Exporting Ticket Data`,
+        description: `Your ticket data is being exported as a CSV file.`,
+      });
+      downloadCSV(mockTickets, 'kapture-tickets-export.csv');
+    } else if (type === 'PDF') {
+      toast({
+        title: `Feature Coming Soon`,
+        description: `PDF export functionality is currently in development.`,
+        variant: 'default',
+      });
+    }
   };
 
   return (
