@@ -36,17 +36,17 @@ const routeTicketPrompt = ai.definePrompt({
   output: {
     schema: RouteTicketOutputSchema,
   },
-  prompt: `Given the following ticket details and available agent skills, determine the most suitable agent to assign the ticket to.
+  prompt: `You are an expert at routing support tickets. Given the following ticket details and available agent skills, determine the most suitable agent to assign the ticket to.
 
 Ticket Details: {{{ticketDetails}}}
 
-Available Agent Skills: {{#each agentSkills}}{{{this}}}, {{/each}}
+Available Agent Skills: {{#each agentSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
-Consider the ticket's content, priority, and required skills.  Prioritize agents with the most relevant skills and the lowest current workload.
+Consider the ticket's content, priority, and required skills. Prioritize agents with the most relevant skills.
 
-Return the ID of the assigned agent and the reason for the assignment. If no suitable agent is found, return null for the agent ID and provide a reason.
+Return the ID of an agent from the provided agent list. The agent ID should be one of the mock agent IDs (e.g., 'agent-1', 'agent-2'). Also, provide a brief reason for the assignment. If no suitable agent is found, return null for the agent ID and explain why.
 
-Ensure the output is valid JSON.`, 
+Ensure the output is valid JSON that conforms to the specified output schema.`,
 });
 
 const routeTicketFlow = ai.defineFlow(
